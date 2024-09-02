@@ -161,14 +161,14 @@ normalize = transforms.Normalize(mean=mean,std=std)
 
 # All datasets
 train_dataset = datasets.ImageFolder(
-    os.path.join(args.data_path, 'train_cropped_augmented'),
+    os.path.join(args.data_path, 'cub200_cropped', 'train_cropped_augmented'),
     transforms.Compose([
         transforms.Resize(size=(img_size, img_size)),
         transforms.ToTensor(),
         normalize,
     ]))
 test_dataset = datasets.ImageFolder(
-    os.path.join(args.data_path, 'test_cropped'),
+    os.path.join(args.data_path, 'cub200_cropped', 'test_cropped'),
     transforms.Compose([
         transforms.Resize(size=(img_size, img_size)),
         transforms.ToTensor(),
