@@ -46,7 +46,7 @@ ft=train
 for data_set in CUB2011;
 do
     prototype_num=2000
-    data_path=datasets/cub200_cropped
+    data_path=datasets
     
     python -m torch.distributed.launch --nproc_per_node=$num_gpus --master_port=$use_port --use_env main.py \
         --seed=$seed \
