@@ -12,7 +12,8 @@ import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from pathlib import Path
 
-import model, train_and_test as tnt
+import model
+import train_and_test as tnt
 import util.utils as utils
 from util.utils import str2bool
 from torch.utils.tensorboard import SummaryWriter
