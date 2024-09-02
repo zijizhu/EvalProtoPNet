@@ -1,4 +1,3 @@
-import os
 import cv2
 import torch
 import numpy as np
@@ -7,7 +6,7 @@ from tqdm import tqdm
 
 from util.datasets import Cub2011Eval
 from util.preprocess import mean, std
-from util.local_parts import id_to_path, id_to_part_loc, id_to_bbox, part_num, in_bbox
+from util.local_parts import id_to_part_loc, id_to_bbox, part_num, in_bbox
 
 
 def perturb_img(norm_img, std=0.2, eps=0.25):
@@ -77,11 +76,6 @@ def get_corresponding_object_parts(ppnet, args, half_size, use_noise=False):
         `class_part_masks` save the part masks of images in this class.
         '''
         for _, img_id in enumerate(img_ids):
-            test_image_path = os.path.join(args.data_path, 'test_cropped', id_to_path[img_id][0], id_to_path[img_id][1])
-            # Read the image
-            original_img = cv2.imread(test_image_path)
-            original_img = cv2.resize(original_img, (img_size, img_size))
-
             # Get part annotations
             part_labels, part_mask = [], np.zeros(part_num,)
             bbox = id_to_bbox[img_id]
