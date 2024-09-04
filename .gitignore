@@ -8,3 +8,5 @@ output_view/
 output_debug/
 output_cosine/
 output_ablation/
+
+*.ipynb

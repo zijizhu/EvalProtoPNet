@@ -3,6 +3,8 @@ import logging
 import torch.nn.functional as F
 import util.utils as utils
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def _train_or_test(model, epoch, dataloader, tb_writer, iteration, optimizer=None,
                    coefs=None, args=None):
@@ -30,8 +32,8 @@ def _train_or_test(model, epoch, dataloader, tb_writer, iteration, optimizer=Non
     it = 0
 
     for image, label in metric_logger.log_every(dataloader, print_freq, header):
-        input = image.cuda()
-        target = label.cuda()
+        input = image.to(device=device)
+        target = label.to(device=device)
         grad_req = torch.enable_grad() if is_train else torch.no_grad()
         with grad_req:
             output, (min_distances, proto_acts, shallow_feas, deep_feas) = model(input)
@@ -143,8 +145,11 @@ def warm_only(model):
 def joint(model):
     if hasattr(model, 'module'):
         model = model.module
-    for p in model.features.parameters():
-        p.requires_grad = True
+    if 'vit' in str(model):
+        model.features.set_requires_grad()
+    else:
+        for p in model.features.parameters():
+            p.requires_grad = True
     for p in model.add_on_layers.parameters():
         p.requires_grad = True
     model.activation_weight.requires_grad = True

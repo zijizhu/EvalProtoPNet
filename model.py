@@ -1,3 +1,5 @@
+from functools import partial
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -5,6 +7,7 @@ import torch.nn.functional as F
 from models.resnet_features import resnet18_features, resnet34_features, resnet50_features, resnet50_inat_features, resnet101_features, resnet152_features
 from models.densenet_features import densenet121_features, densenet161_features, densenet169_features, densenet201_features
 from models.vgg_features import vgg11_features, vgg11_bn_features, vgg13_features, vgg13_bn_features, vgg16_features, vgg16_bn_features, vgg19_features, vgg19_bn_features
+from models.vit_features import DINOv2BackboneExpanded
 
 base_architecture_to_features = {'resnet18': resnet18_features,
                                  'resnet34': resnet34_features,
@@ -23,7 +26,15 @@ base_architecture_to_features = {'resnet18': resnet18_features,
                                  'vgg16': vgg16_features,
                                  'vgg16_bn': vgg16_bn_features,
                                  'vgg19': vgg19_features,
-                                 'vgg19_bn': vgg19_bn_features}
+                                 'vgg19_bn': vgg19_bn_features,
+                                 # Foundational model experiments
+                                 'dinov2_vits_exp': partial(DINOv2BackboneExpanded, name="dinov2_vits14_reg4", n_splits=3),
+                                 'dinov2_vitb_exp': partial(DINOv2BackboneExpanded, name="dinov2_vitb14_reg4", n_splits=3),
+                                 'clip_vitb/32': None,
+                                 'clip_vitb/16': None
+                                 }
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class OursNet(nn.Module):
     def __init__(self, features, img_size, prototype_shape,
@@ -63,6 +74,12 @@ class OursNet(nn.Module):
             self.shallow_layer_idx = 4
             first_add_on_layer_in_channels = \
                 [i for i in features.modules() if isinstance(i, nn.BatchNorm2d)][-1].num_features
+        elif features_name == "DINOV2_VITB14_REG4":
+            self.shallow_layer_idx = 0
+            first_add_on_layer_in_channels = 384
+        elif features_name == "DINOV2_VITB14_REG4":
+            self.shallow_layer_idx = 0
+            first_add_on_layer_in_channels = 768
         else:
             raise Exception('other base base_architecture NOT implemented')
 
@@ -155,7 +172,7 @@ class OursNet(nn.Module):
 
     def get_clst_loss(self, min_distances, label):
         max_dist = (self.prototype_shape[1] * self.prototype_shape[2] * self.prototype_shape[3])
-        prototypes_of_correct_class = torch.t(self.prototype_class_identity[:, label]).cuda()
+        prototypes_of_correct_class = torch.t(self.prototype_class_identity[:, label]).to(device=device)
         inverted_distances, _ = torch.max((max_dist - min_distances) * prototypes_of_correct_class, dim=1)
         cluster_cost = torch.mean(max_dist - inverted_distances)
 
@@ -163,7 +180,7 @@ class OursNet(nn.Module):
     
     def get_sep_loss(self, min_distances, label):
         max_dist = (self.prototype_shape[1] * self.prototype_shape[2] * self.prototype_shape[3])
-        prototypes_of_correct_class = torch.t(self.prototype_class_identity[:, label]).cuda()
+        prototypes_of_correct_class = torch.t(self.prototype_class_identity[:, label]).to(device=device)
         prototypes_of_wrong_class = 1 - prototypes_of_correct_class
         inverted_distances_to_nontarget_prototypes, _ = \
             torch.max((max_dist - min_distances) * prototypes_of_wrong_class, dim=1)
@@ -176,7 +193,7 @@ class OursNet(nn.Module):
         subspace_basis_matrix = cur_basis_matrix.reshape(self.num_classes, self.num_prototypes_per_class, self.prototype_shape[1])
         subspace_basis_matrix_T = torch.transpose(subspace_basis_matrix,1,2)
         orth_operator = torch.matmul(subspace_basis_matrix, subspace_basis_matrix_T)
-        I_operator = torch.eye(subspace_basis_matrix.size(1), subspace_basis_matrix.size(1)).cuda()
+        I_operator = torch.eye(subspace_basis_matrix.size(1), subspace_basis_matrix.size(1)).to(device=device)
         difference_value = orth_operator - I_operator
         ortho_cost = torch.sum(torch.relu(torch.norm(difference_value,p=1,dim=[1,2]) - 0))
 
@@ -191,7 +208,7 @@ class OursNet(nn.Module):
         # Select the prototypes corresponding to the label
         proto_per_class = self.num_prototypes_per_class
         proto_indices = (label * proto_per_class).unsqueeze(dim=-1).repeat(1, proto_per_class)
-        proto_indices += torch.arange(proto_per_class).cuda()   # (B, 10), get 10 indices of activation maps of each sample
+        proto_indices += torch.arange(proto_per_class).to(device=device)   # (B, 10), get 10 indices of activation maps of each sample
         max_positions = proto_acts.argmax(dim=-1)   # (B, 2000)
         max_positions = torch.gather(max_positions, 1, proto_indices)   # (B, 10)
         
