@@ -74,7 +74,7 @@ class OursNet(nn.Module):
             self.shallow_layer_idx = 4
             first_add_on_layer_in_channels = \
                 [i for i in features.modules() if isinstance(i, nn.BatchNorm2d)][-1].num_features
-        elif features_name == "DINOV2_VITB14_REG4":
+        elif features_name == "DINOV2_VITS14_REG4":
             self.shallow_layer_idx = 0
             first_add_on_layer_in_channels = 384
         elif features_name == "DINOV2_VITB14_REG4":
