@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
     # All datasets
     train_dataset = datasets.ImageFolder(
-        os.path.join(args.data_path, 'cub200_cropped', 'train_cropped'),
+        os.path.join(args.data_path, 'cub200_cropped', 'train_cropped_augmented'),
         transforms.Compose([
             transforms.Resize(size=(img_size, img_size)),
             transforms.ToTensor(),
