@@ -127,7 +127,6 @@ class DINOv2BackboneExpanded(nn.Module):
     def set_requires_grad(self):
         for name, param in self.dino.named_parameters():
             param.requires_grad = name in self.learnable_param_names
-        print()
 
     def forward(self, x: torch.Tensor, key: str = "x_norm_patchtokens", reshape: bool = False) -> torch.Tensor:
         feature_dict = self.dino.forward_features(x)  # type: dict[str, torch.Tensor]

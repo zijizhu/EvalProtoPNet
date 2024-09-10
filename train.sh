@@ -2,5 +2,5 @@
 
 set -x
 
-bash scripts/train.sh densenet161 1
-bash scripts/train.sh resnet34 1
+bash scripts/train.sh dinov2_vitb_exp 1
+bash scripts/train.sh dinov2_vits_exp 1

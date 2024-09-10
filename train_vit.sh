@@ -6,14 +6,7 @@ export CUDA_VISIBLE_DEVICES=0,1
 model=$1
 num_gpus=$2
 
-# num_gpus=2
 use_port=2681
-# model=resnet34
-# model=resnet152
-# model=vgg19
-# model=densenet121
-# model=densenet161
-# model=resnet50_inat
 train_batch_size=80
 test_batch_size=150
 

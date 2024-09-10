@@ -67,8 +67,9 @@ def _train_or_test(model, epoch, dataloader, tb_writer, iteration, optimizer=Non
                 loss = (coefs['crs_ent'] * cross_entropy
                     + coefs['clst'] * cluster_cost
                     + coefs['sep'] * separation_cost
-                    + coefs['orth'] * ortho_cost
-                    + coefs['consis'] * consis_cost)
+                    + coefs['orth'] * ortho_cost)
+                if coefs['consis'] > 0:
+                    loss += coefs['consis'] * consis_cost
             else:
                 loss = (coefs['crs_ent'] * cross_entropy
                     + coefs['clst'] * cluster_cost
