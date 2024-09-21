@@ -43,13 +43,13 @@ def _train_or_test(model, epoch, dataloader, tb_writer, iteration, optimizer=Non
 
             model_without_ddp = model.module if hasattr(model, 'module') else model
             # Clst loss
-            cluster_cost = model_without_ddp.get_clst_loss(min_distances, label)
+            # cluster_cost = model_without_ddp.get_clst_loss(min_distances, label)
             # Seq loss
-            separation_cost = model_without_ddp.get_sep_loss(min_distances, label)
+            # separation_cost = model_without_ddp.get_sep_loss(min_distances, label)
             # Ortho loss
-            ortho_cost = model_without_ddp.get_ortho_loss()
+            # ortho_cost = model_without_ddp.get_ortho_loss()
             # Consis loss
-            consis_cost = model_without_ddp.get_SDFA_loss(proto_acts, shallow_feas, deep_feas, target, consis_thresh=args.consis_thresh)
+            # consis_cost = model_without_ddp.get_SDFA_loss(proto_acts, shallow_feas, deep_feas, target, consis_thresh=args.consis_thresh)
 
             # evaluation statistics
             _, predicted = torch.max(output.data, 1)
@@ -58,23 +58,23 @@ def _train_or_test(model, epoch, dataloader, tb_writer, iteration, optimizer=Non
 
             n_batches += 1
             total_cross_entropy += cross_entropy.item()
-            total_cluster_cost += cluster_cost.item()
-            total_separation_cost += separation_cost.item()
-            total_orth_cost += ortho_cost.item()
+            # total_cluster_cost += cluster_cost.item()
+            # total_separation_cost += separation_cost.item()
+            # total_orth_cost += ortho_cost.item()
 
         if coefs is not None:
             if epoch >= args.warmup_epochs:
-                loss = (coefs['crs_ent'] * cross_entropy
-                    + coefs['clst'] * cluster_cost
-                    + coefs['sep'] * separation_cost
-                    + coefs['orth'] * ortho_cost)
-                if coefs['consis'] > 0:
-                    loss += coefs['consis'] * consis_cost
+                loss = (coefs['crs_ent'] * cross_entropy)
+                    # + coefs['clst'] * cluster_cost
+                    # + coefs['sep'] * separation_cost
+                    # + coefs['orth'] * ortho_cost)
+                # if coefs['consis'] > 0:
+                #     loss += coefs['consis'] * consis_cost
             else:
-                loss = (coefs['crs_ent'] * cross_entropy
-                    + coefs['clst'] * cluster_cost
-                    + coefs['sep'] * separation_cost
-                    + coefs['orth'] * ortho_cost)
+                loss = (coefs['crs_ent'] * cross_entropy)
+                    # + coefs['clst'] * cluster_cost
+                    # + coefs['sep'] * separation_cost
+                    # + coefs['orth'] * ortho_cost)
         loss_value = loss.item()
         metric_logger.update(loss=loss_value)
 
@@ -112,7 +112,7 @@ def _train_or_test(model, epoch, dataloader, tb_writer, iteration, optimizer=Non
         del min_distances
     
     results_loss = {'cross_entropy': total_cross_entropy / n_batches,
-                    'orth_loss': total_orth_cost / n_batches,
+                    # 'orth_loss': total_orth_cost / n_batches,
                     'accu' : n_correct / n_examples * 100
                     }
     return n_correct / n_examples * 100, results_loss
