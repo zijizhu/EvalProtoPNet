@@ -119,6 +119,10 @@ def eval_nmi_ari(net: nn.Module, dataloader: DataLoader, C: int = 200, K: int = 
         batch_size, _, input_h, input_w = images.shape
 
         attn_maps = get_attn_maps(net=net, images=images, labels=labels, C=C, K=K)
+        min_values = rearrange(attn_maps, "B K H W -> B K (H W)").min(dim=-1).values[..., None, None]
+        max_values = rearrange(attn_maps, "B K H W -> B K (H W)").max(dim=-1).values[..., None, None]
+        attn_maps = (attn_maps - min_values) / (max_values - min_values)
+
         attn_maps_resized = F.interpolate(attn_maps, size=(input_h, input_w,), mode='bilinear', align_corners=False)
 
         kp_visibilities = (keypoints.sum(dim=-1) > 0).to(dtype=torch.bool)
