@@ -113,7 +113,6 @@ def _train_or_test(model, epoch, dataloader, tb_writer, iteration, optimizer=Non
         del min_distances
     
     results_loss = {'cross_entropy': total_cross_entropy / n_batches,
-                    'orth_loss': total_orth_cost / n_batches,
                     'accu' : n_correct / n_examples * 100
                     }
     if coefs['clst'] != 0:
