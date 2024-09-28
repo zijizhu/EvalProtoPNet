@@ -138,7 +138,7 @@ class DINOv2BackboneExpanded(nn.Module):
             feature = rearrange(feature, "B (H W) dim -> B dim H W", H=H, W=W)
         
         return feature
-    
+
     def forward_all(self, x: torch.Tensor):
         x = self.dino.prepare_tokens_with_masks(x, masks=None)
 

@@ -87,7 +87,9 @@ if __name__ == "__main__":
     parser.add_argument('--add_on_layers_type', type=str, default='regular')
 
     # Loss
+    parser.add_argument('--use_clst_sep_loss', type=str2bool, default=True)
     parser.add_argument('--use_ortho_loss', type=str2bool, default=True)
+    parser.add_argument('--use_consis_loss', type=str2bool, default=True)
     parser.add_argument('--ortho_coe', type=float, default=1e-4)
     parser.add_argument('--consis_coe', type=float, default=0.30)
     parser.add_argument('--consis_thresh', type=float, default=0.10)
@@ -155,10 +157,10 @@ if __name__ == "__main__":
                         'activation_weight': args.activation_weight_lr}
     coefs = {
         'crs_ent': 1,
-        'orth': 1e-4,
-        'clst': 0.8,
-        'sep': -0.08,
-        'consis': args.consis_coe,
+        'orth': 1e-4 if args.use_orth_loss else 0,
+        'clst': 0.8 if args.use_clst_sep_loss else 0,
+        'sep': -0.08 if args.use_clst_sep_loss else 0,
+        'consis': args.consis_coe if args.use_consis_loss else 0,
     }
 
     normalize = transforms.Normalize(mean=mean,std=std)
@@ -271,6 +273,10 @@ if __name__ == "__main__":
             joint_lr_scheduler.step()
             _, train_results = tnt.train(model=ppnet, epoch=epoch, dataloader=train_loader, optimizer=joint_optimizer,
                         coefs=coefs, args=args, tb_writer=tb_writer, iteration=__global_values__["it"])
+        
+        if utils.get_rank() == 0:
+            for k, v in train_results.items():
+                logger.info(f"{k}: {v}")
 
         test_acc, losses = tnt.test(model=ppnet, epoch=epoch, dataloader=test_loader, coefs=coefs, args=args, tb_writer=tb_writer, iteration=__global_values__["it"])
         tb_writer.add_scalar("epoch/val_acc1", test_acc, epoch)

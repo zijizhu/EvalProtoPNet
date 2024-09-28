@@ -29,10 +29,13 @@ features_lr=$lr
 add_on_layers_lr=3e-3
 prototype_vectors_lr=3e-3
 
-use_ortho_loss=True
+use_clst_sep_loss=$3
+use_ortho_loss=$4
+use_consis_loss=$5
 ortho_coe=1e-4
 consis_coe=0.50
 consis_thresh=0.10
+name=$6
 
 ft=train
 
@@ -43,7 +46,7 @@ do
     
     python -m torch.distributed.launch --nproc_per_node=$num_gpus --master_port=$use_port --use_env main.py \
         --seed=$seed \
-        --output_dir=$output_dir/$data_set/$model/$seed-$lr-$opt-$epochs-$ft \
+        --output_dir=$output_dir/$data_set/$model/$name \
         --data_set=$data_set \
         --data_path=$data_path \
         --train_batch_size=$train_batch_size \
@@ -51,7 +54,9 @@ do
         --base_architecture=$model \
         --input_size=$input_size \
         --prototype_shape $prototype_num $dim 1 1 \
+        --use_clst_sep_loss=$use_clst_sep_loss \
         --use_ortho_loss=$use_ortho_loss \
+        --use_consis_loss=$use_consis_loss \
         --ortho_coe=$ortho_coe \
         --consis_coe=$consis_coe \
         --consis_thresh=$consis_thresh \

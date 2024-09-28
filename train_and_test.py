@@ -22,6 +22,7 @@ def _train_or_test(model, epoch, dataloader, tb_writer, iteration, optimizer=Non
     total_cluster_cost = 0
     total_separation_cost = 0
     total_orth_cost = 0
+    total_consis_cost = 0
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Epoch: [{}]'.format(epoch)
@@ -61,20 +62,20 @@ def _train_or_test(model, epoch, dataloader, tb_writer, iteration, optimizer=Non
             total_cluster_cost += cluster_cost.item()
             total_separation_cost += separation_cost.item()
             total_orth_cost += ortho_cost.item()
+            total_consis_cost += consis_cost.item()
+        
+        loss = coefs['crs_ent'] * cross_entropy
 
-        if coefs is not None:
-            if epoch >= args.warmup_epochs:
-                loss = (coefs['crs_ent'] * cross_entropy
-                    + coefs['clst'] * cluster_cost
-                    + coefs['sep'] * separation_cost
-                    + coefs['orth'] * ortho_cost)
-                if coefs['consis'] > 0:
-                    loss += coefs['consis'] * consis_cost
-            else:
-                loss = (coefs['crs_ent'] * cross_entropy
-                    + coefs['clst'] * cluster_cost
-                    + coefs['sep'] * separation_cost
-                    + coefs['orth'] * ortho_cost)
+        if coefs['clst'] != 0:
+            loss += coefs['clst'] * cluster_cost
+        if coefs['sep'] != 0:
+            loss += coefs['sep'] * separation_cost
+        if coefs['orth'] > 0:
+            loss += coefs['orth'] * ortho_cost
+        
+        if epoch >= args.warmup_epochs and coefs['consis'] > 0:
+            loss += coefs['consis'] * consis_cost
+            
         loss_value = loss.item()
         metric_logger.update(loss=loss_value)
 
@@ -115,6 +116,15 @@ def _train_or_test(model, epoch, dataloader, tb_writer, iteration, optimizer=Non
                     'orth_loss': total_orth_cost / n_batches,
                     'accu' : n_correct / n_examples * 100
                     }
+    if coefs['clst'] != 0:
+        results_loss['clst_cost'] = total_cluster_cost / n_batches
+    if coefs['sep'] != 0:
+        results_loss['sep_cost'] = total_separation_cost / n_batches
+    if coefs['orth'] > 0:
+        results_loss['orth_cost'] = total_orth_cost / n_batches
+    if epoch >= args.warmup_epochs and coefs['consis'] > 0:
+        results_loss['consis_cost'] = total_consis_cost / n_batches
+
     return n_correct / n_examples * 100, results_loss
 
 
