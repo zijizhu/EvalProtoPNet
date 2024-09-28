@@ -157,7 +157,7 @@ if __name__ == "__main__":
                         'activation_weight': args.activation_weight_lr}
     coefs = {
         'crs_ent': 1,
-        'orth': 1e-4 if args.use_orth_loss else 0,
+        'orth': 1e-4 if args.use_ortho_loss else 0,
         'clst': 0.8 if args.use_clst_sep_loss else 0,
         'sep': -0.08 if args.use_clst_sep_loss else 0,
         'consis': args.consis_coe if args.use_consis_loss else 0,
