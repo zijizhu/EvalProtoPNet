@@ -50,7 +50,7 @@ do
     
     python -m torch.distributed.launch --nproc_per_node=$num_gpus --master_port=$use_port --use_env main.py \
         --seed=$seed \
-        --output_dir=$output_dir/$data_set/$model/$seed-$lr-$opt-$epochs-$ft \
+        --output_dir=$output_dir/$data_set/$model/$prototype_num-$ft \
         --data_set=$data_set \
         --data_path=$data_path \
         --train_batch_size=$train_batch_size \
