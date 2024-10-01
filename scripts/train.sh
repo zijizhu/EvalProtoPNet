@@ -5,6 +5,7 @@ export CUDA_VISIBLE_DEVICES=0,1
 
 model=$1
 num_gpus=$2
+prototype_num=$3
 
 # num_gpus=2
 use_port=2681
@@ -45,7 +46,6 @@ ft=train
 
 for data_set in CUB2011;
 do
-    prototype_num=2000
     data_path=datasets
     
     python -m torch.distributed.launch --nproc_per_node=$num_gpus --master_port=$use_port --use_env main.py \

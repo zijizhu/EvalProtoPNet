@@ -10,3 +10,4 @@ output_cosine/
 output_ablation/
 
 *.ipynb
+*.pth
