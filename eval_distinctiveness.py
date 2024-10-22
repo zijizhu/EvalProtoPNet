@@ -42,4 +42,4 @@ if args.resume:
     checkpoint = torch.load(args.resume, map_location='cpu')
 ppnet.load_state_dict(checkpoint['model'])
 
-evaluate_distinctiveness(ppnet, save_path=Path(args.resume).parents[1])
+evaluate_distinctiveness(ppnet, save_path=Path(args.resume).parents[1], device=device)
