@@ -78,7 +78,7 @@ def batch_mean_IoU_bbox(batch_activations: torch.Tensor, bbox_size: int = 56):
         iou_matrix_triu = iou_matrix[iou_matrix_mask]
         mean_IoUs.append(iou_matrix_triu.mean().item())
 
-    return
+    return mean_IoUs
 
 @torch.no_grad()
 def get_attn_maps(outputs: dict[str, torch.Tensor], labels: torch.Tensor):
