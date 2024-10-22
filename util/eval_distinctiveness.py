@@ -117,4 +117,4 @@ def evaluate_distinctiveness(net: nn.Module,
     for thresh, mean_IoUs in thresh_to_mean_IoUs.items():
         score = 1 - (sum(mean_IoUs) / len(mean_IoUs))
         thresh_to_scores[thresh] = score
-        logger.info(f"Distinctiveness Score Threshold {thresh:.1f}: {score:.4f}")
+        print(f"Distinctiveness Score Threshold {thresh:.1f}: {score:.4f}")
