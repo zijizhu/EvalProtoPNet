@@ -1,7 +1,9 @@
 import os
 import model
+import logging
 import torch
 import argparse
+import sys
 from pathlib import Path
 from util.eval_distinctiveness import evaluate_distinctiveness
     
@@ -42,4 +44,17 @@ if args.resume:
     checkpoint = torch.load(args.resume, map_location='cpu')
 ppnet.load_state_dict(checkpoint['model'])
 
-evaluate_distinctiveness(ppnet, save_path=Path(args.resume).parents[1], device=device)
+log_dir = Path(args.resume).parents[1]
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s][%(name)s][%(levelname)s] - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler((log_dir / "evaluate_distinctiveness.log").as_posix()),
+        logging.StreamHandler(sys.stdout),
+    ],
+    force=True,
+)
+
+evaluate_distinctiveness(ppnet, save_path=log_dir, device=device)
