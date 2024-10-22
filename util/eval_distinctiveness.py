@@ -139,7 +139,7 @@ def evaluate_distinctiveness(net: nn.Module,
         batch_activations_resized = F.interpolate(batch_activations, size=(INPUT_H, INPUT_W,), mode="bilinear")
 
         for thresh in [72, 90]:
-            thresh_to_mean_IoUs[thresh] += batch_mean_IoU_bbox(batch_activations_resized, bbox_size=72)
+            thresh_to_mean_IoUs[thresh] += batch_mean_IoU_bbox(batch_activations_resized, bbox_size=thresh)
     
     np.savez(Path(save_path) / "threshold_to_mean_IoUs", **{f"{thresh:.1f}": np.array(values) for thresh, values in thresh_to_mean_IoUs.items()})
         
