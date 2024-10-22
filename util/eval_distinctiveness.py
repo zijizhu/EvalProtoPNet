@@ -11,6 +11,7 @@ from einops import rearrange
 from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from torchvision.ops import box_convert, box_iou
 
 from .datasets import Cub2011Eval
 from .preprocess import mean, std
@@ -41,8 +42,6 @@ def batch_mean_IoU(batch_activations: torch.Tensor, threshold: float = 0.7):
     B, K, H, W = batch_activations.shape
     iou_matrix_mask = torch.ones((K, K,)).triu(diagonal=1).to(dtype=torch.bool, device=batch_activations.device)
 
-    topk = F.adaptive_max_pool2d(batch_activations, output_size=(1, 1,))
-
     mean_IoUs = []
     binary_activations = norm_and_thresh(batch_activations, threshold=threshold)
     for activations in binary_activations:
@@ -56,6 +55,30 @@ def batch_mean_IoU(batch_activations: torch.Tensor, threshold: float = 0.7):
         mean_IoUs.append(iou_matrix_triu.mean().item())
 
     return mean_IoUs
+
+def batch_mean_IoU_bbox(batch_activations: torch.Tensor, threshold: float = 0.7, bbox_size: int = 36):
+    B, K, H, W = batch_activations.shape
+    iou_matrix_mask = torch.ones((K, K,)).triu(diagonal=1).to(dtype=torch.bool, device=batch_activations.device)
+    mean_IoUs = []
+
+    _, indices = F.adaptive_max_pool2d(batch_activations, output_size=(1, 1,), return_indices=True)
+    cy, cx = torch.unravel_index(indices, (H, W,))
+    cxcy = torch.stack([cy.squeeze(), cx.squeeze()], dim=-1)
+    box_hw = torch.full_like(cxcy, bbox_size)
+    batch_boxes_cxcywh = torch.cat([cxcy, box_hw], dim=-1)
+
+    for boxes_cxcywh in batch_boxes_cxcywh:
+        iou_matrix = torch.zeros((K, K,), device=batch_activations.device)
+        boxes_xyxy = box_convert(boxes_cxcywh, in_fmt="cxcywh", out_fmt="xyxy")
+
+        for i in range(K):
+            for j in range(i + 1, K):
+                iou_matrix[i, j] = box_iou(boxes_xyxy[i].unsqueeze(0), boxes_cxcywh[j].unsqueeze(0)).squeeze().item()
+
+        iou_matrix_triu = iou_matrix[iou_matrix_mask]
+        mean_IoUs.append(iou_matrix_triu.mean().item())
+
+    return
 
 @torch.no_grad()
 def get_attn_maps(outputs: dict[str, torch.Tensor], labels: torch.Tensor):
@@ -116,7 +139,7 @@ def evaluate_distinctiveness(net: nn.Module,
         batch_activations_resized = F.interpolate(batch_activations, size=(INPUT_H, INPUT_W,), mode="bilinear")
 
         for thresh in thresholds:
-            thresh_to_mean_IoUs[thresh] += batch_mean_IoU(batch_activations_resized, threshold=thresh)
+            thresh_to_mean_IoUs[thresh] += batch_mean_IoU_bbox(batch_activations_resized, threshold=thresh)
     
     np.savez(Path(save_path) / "threshold_to_mean_IoUs", **{f"{thresh:.1f}": np.array(values) for thresh, values in thresh_to_mean_IoUs.items()})
         
