@@ -73,7 +73,7 @@ def batch_mean_IoU_bbox(batch_activations: torch.Tensor, bbox_size: int = 56):
 
         for i in range(K):
             for j in range(i + 1, K):
-                iou_matrix[i, j] = box_iou(boxes_xyxy[i].unsqueeze(0), boxes_cxcywh[j].unsqueeze(0)).squeeze().item()
+                iou_matrix[i, j] = box_iou(boxes_xyxy[i].unsqueeze(0), boxes_xyxy[j].unsqueeze(0)).squeeze().item()
 
         iou_matrix_triu = iou_matrix[iou_matrix_mask]
         mean_IoUs.append(iou_matrix_triu.mean().item())
