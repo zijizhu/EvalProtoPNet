@@ -41,6 +41,8 @@ def batch_mean_IoU(batch_activations: torch.Tensor, threshold: float = 0.7):
     B, K, H, W = batch_activations.shape
     iou_matrix_mask = torch.ones((K, K,)).triu(diagonal=1).to(dtype=torch.bool, device=batch_activations.device)
 
+    topk = F.adaptive_max_pool2d(batch_activations, output_size=(1, 1,))
+
     mean_IoUs = []
     binary_activations = norm_and_thresh(batch_activations, threshold=threshold)
     for activations in binary_activations:
@@ -72,6 +74,7 @@ def get_attn_maps(outputs: dict[str, torch.Tensor], labels: torch.Tensor):
 def evaluate_distinctiveness(net: nn.Module,
                              save_path: str | Path,
                              thresholds: list[float] =  [0.4, 0.5, 0.6, 0.7, 0.8],
+                             topk: int = 4,
                              num_classes: int = 200,
                              device: torch.device = torch.device("cpu"),
                              input_size: tuple[int, int] = (224, 224,)):
@@ -101,8 +104,12 @@ def evaluate_distinctiveness(net: nn.Module,
             proto_indices = (targets * K).unsqueeze(dim=-1).repeat(1, K)
             proto_indices += torch.arange(K).to(device=device)   # The indexes of prototypes belonging to the ground-truth class of each image
             proto_indices = proto_indices[:, :, None, None].repeat(1, 1, H, W)
-            batch_activations = torch.gather(all_batch_activations, 1, proto_indices) # (B, proto_per_class, fea_size, fea_size)
-            batch_activations = F.avg_pool2d(batch_activations, kernel_size=(2, 2,), stride=2)
+            gt_batch_activations = torch.gather(all_batch_activations, 1, proto_indices) # (B, proto_per_class, fea_size, fea_size)
+
+            max_vals = F.adaptive_max_pool2d(gt_batch_activations, output_size=(1, 1,))
+            topk_batch_activations = torch.gather(gt_batch_activations, 1, max_vals.topk(dim=1, k=topk).indices.repeat(1, 1, H, W))
+
+            batch_activations = F.avg_pool2d(topk_batch_activations, kernel_size=(2, 2,), stride=2)
         else:
             outputs = net(images, targets)
             batch_activations = get_attn_maps(outputs, labels=targets)
