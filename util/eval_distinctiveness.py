@@ -56,7 +56,7 @@ def batch_mean_IoU(batch_activations: torch.Tensor, threshold: float = 0.7):
 
     return mean_IoUs
 
-def batch_mean_IoU_bbox(batch_activations: torch.Tensor, threshold: float = 0.7, bbox_size: int = 36):
+def batch_mean_IoU_bbox(batch_activations: torch.Tensor, bbox_size: int = 56):
     B, K, H, W = batch_activations.shape
     iou_matrix_mask = torch.ones((K, K,)).triu(diagonal=1).to(dtype=torch.bool, device=batch_activations.device)
     mean_IoUs = []
@@ -139,7 +139,7 @@ def evaluate_distinctiveness(net: nn.Module,
         batch_activations_resized = F.interpolate(batch_activations, size=(INPUT_H, INPUT_W,), mode="bilinear")
 
         for thresh in thresholds:
-            thresh_to_mean_IoUs[thresh] += batch_mean_IoU_bbox(batch_activations_resized, threshold=thresh)
+            thresh_to_mean_IoUs[thresh] += batch_mean_IoU_bbox(batch_activations_resized)
     
     np.savez(Path(save_path) / "threshold_to_mean_IoUs", **{f"{thresh:.1f}": np.array(values) for thresh, values in thresh_to_mean_IoUs.items()})
         
