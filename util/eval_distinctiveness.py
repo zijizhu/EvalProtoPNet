@@ -13,7 +13,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torchvision.ops import box_convert, box_iou
 
-from .utils import Cub2011Eval, mean, std
+from .datasets import Cub2011Eval
+from .preprocess import mean, std
 
 logger = getLogger(__name__)
 
