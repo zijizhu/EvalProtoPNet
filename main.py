@@ -282,6 +282,20 @@ if __name__ == "__main__":
             logger.info(f"Consistency score of the network on the {len(test_dataset)} test images: {consistency_score:.2f}%")
             logger.info(f"Accuracy of the network on the {len(test_dataset)} test images: {test_acc:.2f}%")
         
+        if test_acc >= max_accuracy:
+            utils.save_on_master({
+                'model': ppnet_without_ddp.state_dict(),
+                'epoch': epoch,
+                'args': args,
+            }, output_dir / "checkpoints/best_accuracy.pth")
+        
+        if consistency_score >= max_consis_score:
+            utils.save_on_master({
+                'model': ppnet_without_ddp.state_dict(),
+                'epoch': epoch,
+                'args': args,
+            }, output_dir / "checkpoints/best_consis.pth")
+        
         if epoch == args.epochs - 1:
             checkpoint_paths = [output_dir / 'checkpoints/save_model.pth']
             for checkpoint_path in checkpoint_paths:
