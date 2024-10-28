@@ -9,10 +9,13 @@ from dinov2.layers.block import Block, MemEffAttention
 from dinov2.models.vision_transformer import DinoVisionTransformer as Dinov2VisionTransformer
 from .dino_backbone.vision_transformer import VisionTransformer
 from einops import rearrange
+from math import sqrt
 from torch import nn
+from logging import getLogger
 
 from .maskclip import clip
 
+logger = getLogger(__name__)
 
 def block_expansion_dino(state_dict: dict[str, torch.Tensor], n_splits: int = 3):
     """Perform Block Expansion on a ViT described in https://arxiv.org/abs/2404.17245"""
@@ -77,10 +80,10 @@ vit_base_kwargs = dict(embed_dim=768, num_heads=12)
 MODEL_DICT = {
     "dinov2_vits14_reg4": partial(Dinov2VisionTransformer, **vit_small_kwargs, **dinov2_common_kwargs),
     "dinov2_vitb14_reg4": partial(Dinov2VisionTransformer, **vit_base_kwargs, **dinov2_common_kwargs),
-    "dino_vits16": partial(VisionTransformer, patch_size=8, **vit_small_kwargs, **dino_common_kwargs),
+    "dino_vits16": partial(VisionTransformer, patch_size=16, **vit_small_kwargs, **dino_common_kwargs),
     "dino_vits8": partial(VisionTransformer, patch_size=8, **vit_small_kwargs, **dino_common_kwargs),
     "dino_vitb16": partial(VisionTransformer, patch_size=16, **vit_base_kwargs, **dino_common_kwargs),
-    "dino_vitb8": partial(VisionTransformer, patch_size=16, **vit_base_kwargs, **dino_common_kwargs)
+    "dino_vitb8": partial(VisionTransformer, patch_size=8, **vit_base_kwargs, **dino_common_kwargs)
 }
 URL_DICT = {
     "dinov2_vits14_reg4": "https://dl.fbaipublicfiles.com/dinov2/dinov2_vits14/dinov2_vits14_reg4_pretrain.pth",
@@ -140,6 +143,7 @@ class DINOv2BackboneExpanded(nn.Module):
             self.learnable_param_names = []
     
     def learnable_parameters(self):
+        logger.info("Setting backbone learnable params")
         return list(param for name, param in self.dino.named_parameters() if name in self.learnable_param_names)
     
     def set_requires_grad(self):
@@ -196,6 +200,7 @@ class DINOBackboneExpanded(nn.Module):
             self.learnable_param_names = []
 
     def learnable_parameters(self):
+        logger.info("Setting backbone learnable params")
         return list(param for name, param in self.dino.named_parameters() if name in self.learnable_param_names)
     
     def set_requires_grad(self):
@@ -224,6 +229,22 @@ class DINOBackboneExpanded(nn.Module):
         H = W = int(sqrt(n_patches))
         features = rearrange(x, "B (H W) D -> B D H W", H=H, W=W)
         return features
+
+    def forward_all(self, x: torch.Tensor):
+        x = self.dino.prepare_tokens(x)
+
+        features = []
+        for b, blk in enumerate(self.dino.blocks):
+            x = blk(x)
+            if b in [4, 14]:
+                B, n_patches, dim = x.shape
+                H = W = int(sqrt(n_patches))
+                features.append(rearrange(x[:, 1:], "B (H W) dim -> B dim H W", H=H, W=W))
+
+        x_norm = self.dino.norm(x)
+        B, n_patches, dim = x.shape
+        H = W = int(sqrt(n_patches))
+        return rearrange(x_norm[:, 1:], "B (H W) dim -> B dim H W", H=H, W=W), features
 
     def __repr__(self):
         return self.name
