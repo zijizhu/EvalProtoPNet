@@ -146,7 +146,7 @@ def warm_only(model):
 def joint(model):
     if hasattr(model, 'module'):
         model = model.module
-    if 'vit' in str(model):
+    if 'dino' in str(model.features).lower():
         model.features.set_requires_grad()
     else:
         for p in model.features.parameters():

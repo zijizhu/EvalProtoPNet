@@ -6,7 +6,8 @@ from math import sqrt
 import numpy as np
 import torch
 from dinov2.layers.block import Block, MemEffAttention
-from dinov2.models.vision_transformer import DinoVisionTransformer
+from dinov2.models.vision_transformer import DinoVisionTransformer as Dinov2VisionTransformer
+from .dino_backbone.vision_transformer import VisionTransformer
 from einops import rearrange
 from torch import nn
 
@@ -50,7 +51,7 @@ def block_expansion_dino(state_dict: dict[str, torch.Tensor], n_splits: int = 3)
     return expanded_state_dict, len(block_indices.flatten()), learnable_param_names, zero_param_names
 
 
-common_kwargs = dict(
+dinov2_common_kwargs = dict(
     img_size=518,
     patch_size=14,
     mlp_ratio=4,
@@ -63,14 +64,24 @@ common_kwargs = dict(
     block_fn=partial(Block, attn_class=MemEffAttention)
 )
 
+dino_common_kwargs = dict(
+    num_classes=0,
+    mlp_ratio=4,
+    qkv_bias=True,
+    norm_layer=partial(nn.LayerNorm, eps=1e-6),
+)
+
 vit_small_kwargs = dict(embed_dim=384, num_heads=6)
 vit_base_kwargs = dict(embed_dim=768, num_heads=12)
 
 MODEL_DICT = {
-    "dinov2_vits14_reg4": partial(DinoVisionTransformer, **vit_small_kwargs, **common_kwargs),
-    "dinov2_vitb14_reg4": partial(DinoVisionTransformer, **vit_base_kwargs, **common_kwargs)
+    "dinov2_vits14_reg4": partial(Dinov2VisionTransformer, **vit_small_kwargs, **dinov2_common_kwargs),
+    "dinov2_vitb14_reg4": partial(Dinov2VisionTransformer, **vit_base_kwargs, **dinov2_common_kwargs),
+    "dino_vits16": partial(VisionTransformer, patch_size=8, **vit_small_kwargs, **dino_common_kwargs),
+    "dino_vits8": partial(VisionTransformer, patch_size=8, **vit_small_kwargs, **dino_common_kwargs),
+    "dino_vitb16": partial(VisionTransformer, patch_size=16, **vit_base_kwargs, **dino_common_kwargs),
+    "dino_vitb8": partial(VisionTransformer, patch_size=16, **vit_base_kwargs, **dino_common_kwargs)
 }
-
 URL_DICT = {
     "dinov2_vits14_reg4": "https://dl.fbaipublicfiles.com/dinov2/dinov2_vits14/dinov2_vits14_reg4_pretrain.pth",
     "dinov2_vitb14_reg4": "https://dl.fbaipublicfiles.com/dinov2/dinov2_vitb14/dinov2_vitb14_reg4_pretrain.pth"
@@ -151,6 +162,62 @@ class DINOv2BackboneExpanded(nn.Module):
         x_norm = self.dino.norm(x)
         return rearrange(x_norm[:, self.dino.num_register_tokens + 1:, :], "B (H W) dim -> B dim H W", H=16, W=16), features
     
+    def __repr__(self):
+        return self.name
+
+
+class DINOBackboneExpanded(nn.Module):
+    def __init__(self, name: str = "dino_vitb16", n_splits: int = 0, mode: str = "block_expansion", freeze_norm_layer: bool = True):
+        super().__init__()
+        self.name = name
+        self.dim = DIM_DICT[name]
+        assert mode in ["block_expansion", "append"]
+
+        arch = MODEL_DICT[name]
+        state_dict = torch.hub.load_state_dict_from_url(URL_DICT[name], map_location="cpu")
+        if n_splits > 0:
+            expanded_state_dict, n_blocks, learnable_param_names, zero_param_names = block_expansion_dino(
+                state_dict=state_dict,
+                n_splits=n_splits,
+                freeze_layer_norm=freeze_norm_layer
+            )
+            self.dino = arch(depth=n_blocks)
+            self.dino.load_state_dict(expanded_state_dict)
+            self.learnable_param_names = learnable_param_names
+        else:
+            self.dino = torch.hub.load('facebookresearch/dino:main', name)
+            self.learnable_param_names = []
+
+    def learnable_parameters(self):
+        return list(param for name, param in self.dino.named_parameters() if name in self.learnable_param_names)
+    
+    def set_requires_grad(self):
+        for name, param in self.dino.named_parameters():
+            param.requires_grad = name in self.learnable_param_names
+    
+    def forward_with_original_feature(self, x):
+        x = self.dino.prepare_tokens(x)
+        
+        original_feature = None
+        for i, blk in enumerate(self.dino.blocks):
+            x = blk(x)
+            if i == 11:
+                original_feature = self.dino.norm(x)
+        x = self.dino.norm(x)
+        return x[:, 1:], original_feature[:, 1:]
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.dino.prepare_tokens(x)
+        
+        for i, blk in enumerate(self.dino.blocks):
+            x = blk(x)
+        x = self.dino.norm(x)
+        x =  x[:, 1:]
+        batch_size, n_patches, dim = x.shape
+        H = W = int(sqrt(n_patches))
+        features = rearrange(x, "B (H W) D -> B D H W", H=H, W=W)
+        return features
+
     def __repr__(self):
         return self.name
 
