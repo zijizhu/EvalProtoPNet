@@ -186,8 +186,7 @@ class DINOBackboneExpanded(nn.Module):
         if n_splits > 0:
             expanded_state_dict, n_blocks, learnable_param_names, zero_param_names = block_expansion_dino(
                 state_dict=state_dict,
-                n_splits=n_splits,
-                freeze_layer_norm=freeze_norm_layer
+                n_splits=n_splits
             )
             self.dino = arch(depth=n_blocks)
             self.dino.load_state_dict(expanded_state_dict)
