@@ -84,12 +84,20 @@ MODEL_DICT = {
 }
 URL_DICT = {
     "dinov2_vits14_reg4": "https://dl.fbaipublicfiles.com/dinov2/dinov2_vits14/dinov2_vits14_reg4_pretrain.pth",
-    "dinov2_vitb14_reg4": "https://dl.fbaipublicfiles.com/dinov2/dinov2_vitb14/dinov2_vitb14_reg4_pretrain.pth"
+    "dinov2_vitb14_reg4": "https://dl.fbaipublicfiles.com/dinov2/dinov2_vitb14/dinov2_vitb14_reg4_pretrain.pth",
+    "dino_vits16": "https://dl.fbaipublicfiles.com/dino/dino_deitsmall16_pretrain/dino_deitsmall16_pretrain.pth",
+    "dino_vits8": "https://dl.fbaipublicfiles.com/dino/dino_deitsmall8_pretrain/dino_deitsmall8_pretrain.pth",
+    "dino_vitb16": "https://dl.fbaipublicfiles.com/dino/dino_vitbase16_pretrain/dino_vitbase16_pretrain.pth",
+    "dino_vitb8": "https://dl.fbaipublicfiles.com/dino/dino_vitbase8_pretrain/dino_vitbase8_pretrain.pth",
 }
 
 DIM_DICT = {
     "dinov2_vits14_reg4": 384,
-    "dinov2_vitb14_reg4": 768
+    "dinov2_vitb14_reg4": 768,
+    "dino_vits16": 384,
+    "dino_vits8": 384,
+    "dino_vitb16": 768,
+    "dino_vitb8": 768,
 }
 
 
@@ -167,7 +175,7 @@ class DINOv2BackboneExpanded(nn.Module):
 
 
 class DINOBackboneExpanded(nn.Module):
-    def __init__(self, name: str = "dino_vitb16", n_splits: int = 0, mode: str = "block_expansion", freeze_norm_layer: bool = True):
+    def __init__(self, name: str = "dino_vitb16", n_splits: int = 0, mode: str = "block_expansion", freeze_norm_layer: bool = True, pretrained=True):
         super().__init__()
         self.name = name
         self.dim = DIM_DICT[name]
