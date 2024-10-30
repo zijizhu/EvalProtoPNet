@@ -13,6 +13,7 @@ set -x
 # bash scripts/train.sh dinov2_vits_exp 1 1000
 # bash scripts/train.sh dinov2_vits_exp 1 2000
 
+bash scripts/train.sh dino_vitb16 1 2000
 bash scripts/train.sh dino_vitb16 1 1000
 bash scripts/train.sh dino_vitb16 1 600
 
