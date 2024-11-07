@@ -163,21 +163,44 @@ if __name__ == "__main__":
 
     normalize = transforms.Normalize(mean=mean,std=std)
 
+    if dataset_name == "CUB2011":
     # All datasets
-    train_dataset = datasets.ImageFolder(
-        os.path.join(args.data_path, 'cub200_cropped', 'train_cropped_augmented'),
-        transforms.Compose([
-            transforms.Resize(size=(img_size, img_size)),
-            transforms.ToTensor(),
-            normalize,
-        ]))
-    test_dataset = datasets.ImageFolder(
-        os.path.join(args.data_path, 'cub200_cropped', 'test_cropped'),
-        transforms.Compose([
-            transforms.Resize(size=(img_size, img_size)),
-            transforms.ToTensor(),
-            normalize,
-        ]))
+        train_dataset = datasets.ImageFolder(
+            os.path.join(args.data_path, 'cub200_cropped', 'train_cropped_augmented'),
+            transforms.Compose([
+                transforms.Resize(size=(img_size, img_size)),
+                transforms.ToTensor(),
+                normalize,
+            ])
+        )
+        test_dataset = datasets.ImageFolder(
+            os.path.join(args.data_path, 'cub200_cropped', 'test_cropped'),
+            transforms.Compose([
+                transforms.Resize(size=(img_size, img_size)),
+                transforms.ToTensor(),
+                normalize,
+            ])
+        )
+    elif dataset_name == "Car":
+        train_dataset = datasets.StanfordCars(
+            args.data_path, split="train", download=False,
+            transform= transforms.Compose([
+                transforms.Resize(size=(img_size, img_size)),
+                transforms.ToTensor(),
+                normalize,
+            ])
+        )
+
+        test_dataset = datasets.StanfordCars(
+            args.data_path, split="test", download=False,
+            transform= transforms.Compose([
+                transforms.Resize(size=(img_size, img_size)),
+                transforms.ToTensor(),
+                normalize,
+            ])
+        )
+    else:
+        raise NotImplementedError
 
     if args.distributed:
         num_tasks = utils.get_world_size()
