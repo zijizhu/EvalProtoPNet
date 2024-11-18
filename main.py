@@ -74,7 +74,7 @@ if __name__ == "__main__":
     parser.add_argument('--resume', default='', help='resume from checkpoint')  
     # Data
     parser.add_argument('--data_set', default='CUB2011', 
-        choices=['CUB2011U', 'Car', 'Dogs', 'CUB2011'], type=str)
+        choices=['CUB2011U', 'Cars', 'Dogs', 'CUB2011'], type=str)
     parser.add_argument('--data_path', type=str, default='datasets/cub200_cropped/')
     parser.add_argument('--train_batch_size', default=80, type=int)
     parser.add_argument('--test_batch_size', default=150, type=int)
@@ -199,7 +199,7 @@ if __name__ == "__main__":
                 normalize,
             ])
         )
-    elif dataset_name == "Car":
+    elif dataset_name == "Cars":
         train_dataset = datasets.StanfordCars(
             args.data_path, split="train", download=False,
             transform= transforms.Compose([
