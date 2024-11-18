@@ -322,10 +322,12 @@ if __name__ == "__main__":
         tb_writer.add_scalar("epoch/val_acc1", test_acc, epoch)
         tb_writer.add_scalar("epoch/val_loss", losses['cross_entropy'], epoch)
 
-        consistency_score = evaluate_consistency(ppnet, args)
+        if args.dataset == "CUB2011":
+            consistency_score = evaluate_consistency(ppnet, args)
 
         if utils.get_rank() == 0:
-            logger.info(f"Consistency score of the network on the {len(test_dataset)} test images: {consistency_score:.2f}%")
+            if args.dataset == "CUB2011":
+                logger.info(f"Consistency score of the network on the {len(test_dataset)} test images: {consistency_score:.2f}%")
             logger.info(f"Accuracy of the network on the {len(test_dataset)} test images: {test_acc:.2f}%")
         
         if test_acc >= max_accuracy:
@@ -335,7 +337,7 @@ if __name__ == "__main__":
                 'args': args,
             }, output_dir / "checkpoints/best_accuracy.pth")
         
-        if consistency_score >= max_consis_score:
+        if args.dataset == "CUB2011" and consistency_score >= max_consis_score:
             utils.save_on_master({
                 'model': ppnet_without_ddp.state_dict(),
                 'epoch': epoch,
@@ -351,10 +353,12 @@ if __name__ == "__main__":
                     'args': args,
                 }, checkpoint_path)
         max_accuracy = max(max_accuracy, test_acc)
-        max_consis_score = max(max_consis_score, consistency_score)
+        if args.dataset == "CUB2011":
+            max_consis_score = max(max_consis_score, consistency_score)
 
         if utils.get_rank() == 0:
-            logger.info(f'Max consistency score: {max_consis_score:.2f}%')
+            if args.dataset == "CUB2011":
+                logger.info(f'Max consistency score: {max_consis_score:.2f}%')
             logger.info(f'Max accuracy: {max_accuracy:.2f}%')
 
     total_time = time.time() - start_time
