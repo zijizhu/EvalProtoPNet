@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 
 
 class DogsDataset(Dataset):
-    def __init__(self, root: str, split: str, transforms=None) -> None:
+    def __init__(self, root: str, split: str, transform=None) -> None:
         super().__init__()
         assert split in ["train", "test"]
         self.split = split
@@ -22,7 +22,7 @@ class DogsDataset(Dataset):
             train=train_mat['labels'] - 1,
             test=test_mat['labels'] - 1
         )
-        self.transforms = transforms
+        self.transform = transform
         self.classes = np.unique(self.lables[self.split])
 
     def __len__(self):
@@ -32,6 +32,6 @@ class DogsDataset(Dataset):
         im_path = self.samples[self.split][index]
         label = self.lables[self.split][index]
         im = Image.open(self.root / "Images" / im_path).convert("RGB")
-        if self.transforms:
-            im = self.transforms(im)
+        if self.transform:
+            im = self.transform(im)
         return im, label
