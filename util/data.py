@@ -34,4 +34,4 @@ class DogsDataset(Dataset):
         im = Image.open(self.root / "Images" / im_path).convert("RGB")
         if self.transform:
             im = self.transform(im)
-        return im, label
+        return im, int(label)
