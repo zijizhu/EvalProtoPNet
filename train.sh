@@ -2,10 +2,15 @@
 
 set -x
 
-bash train_cars.sh dinov2_vitb_exp 1 980
-bash train_cars.sh dinov2_vits_exp 1 980
-bash train_cars.sh dinov2_vitb_exp 1 588
-bash train_cars.sh dinov2_vits_exp 1 588
+bash train_dogs.sh dinov2_vitb_exp 1 600
+bash train_dogs.sh dinov2_vits_exp 1 600
+bash train_dogs.sh dinov2_vitb_exp 1 360
+bash train_dogs.sh dinov2_vits_exp 1 360
+
+# bash train_cars.sh dinov2_vitb_exp 1 980
+# bash train_cars.sh dinov2_vits_exp 1 980
+# bash train_cars.sh dinov2_vitb_exp 1 588
+# bash train_cars.sh dinov2_vits_exp 1 588
 
 # bash scripts/train.sh dinov2_vitb_exp 1 600
 # bash scripts/train.sh dinov2_vitb_exp 1 1000
