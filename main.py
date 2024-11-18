@@ -16,6 +16,7 @@ import model
 import train_and_test as tnt
 import util.utils as utils
 from util.utils import str2bool
+from util.data import DogsDataset
 from torch.utils.tensorboard import SummaryWriter
 from util.preprocess import mean, std
 from util.eval_interpretability import evaluate_consistency
@@ -176,6 +177,23 @@ if __name__ == "__main__":
         test_dataset = datasets.ImageFolder(
             os.path.join(args.data_path, 'cub200_cropped', 'test_cropped'),
             transforms.Compose([
+                transforms.Resize(size=(img_size, img_size)),
+                transforms.ToTensor(),
+                normalize,
+            ])
+        )
+    elif dataset_name == "Dogs":
+        train_dataset = DogsDataset(
+            root="datasets", split="train",
+            transform= transforms.Compose([
+                transforms.Resize(size=(img_size, img_size)),
+                transforms.ToTensor(),
+                normalize,
+            ])
+        )
+        train_dataset = DogsDataset(
+            root="datasets", split="test",
+            transform= transforms.Compose([
                 transforms.Resize(size=(img_size, img_size)),
                 transforms.ToTensor(),
                 normalize,
