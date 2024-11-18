@@ -196,7 +196,7 @@ if __name__ == "__main__":
                 normalize,
             ])
         )
-        train_dataset = DogsDataset(
+        test_dataset = DogsDataset(
             root="datasets", split="test",
             transform= transforms.Compose([
                 transforms.Resize(size=(img_size, img_size)),
