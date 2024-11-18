@@ -143,8 +143,13 @@ if __name__ == "__main__":
 
     if dataset_name == 'CUB2011':
         args.nb_classes = 200
-    elif dataset_name == 'Car':
+    elif dataset_name == 'Cars':
         args.nb_classes = 196
+    elif dataset_name == 'Dogs':
+        args.nb_classes = 120
+    else:
+        raise NotImplementedError
+    
     img_size = args.input_size
 
     joint_optimizer_lrs = {'features': args.features_lr,
